@@ -9,37 +9,36 @@ public class GameManagerScript : MonoBehaviour
      string debugText = ""; */
 
     public GameObject playerPrefab;
+    public GameObject boxPrefab;
     int[,] map;   // レベルデザイン用の配列
     GameObject[,] field;   // ゲーム管理用の配列
 
-    /*
-    void PrintArray()
+    
+    Vector2Int GetPlayerIndex()
     {
-        string debugText = "";
-        for(int i = 0; i < map.Length; i++) 
+        for(int y = 0; y < field.GetLength(0); y++)
         {
-            debugText += map[i].ToString() + ", ";
-        }
-        Debug.Log(debugText);
-        
-    }
-
-    int GetplayerIndex()
-    {
-        for(int i = 0; i < map.Length; i++)
-        {
-            if (map[i] == 1)
+            for(int x = 0; x < field.GetLength(1); x++)
             {
-                return i;
+                if (field[y,x] == null) { continue; }
+                if (field[y,x].tag == "Player") 
+                {
+                    return new Vector2Int(x, y);
+                }
             }
         }
-        return -1;
+        return new Vector2Int(-1, -1);
     }
+   
     
-    bool MoveNumber(int number, int moveFrom, int moveTo)
+    
+    bool MoveNumber(Vector2Int moveFrom, Vector2Int moveTo)
     {
-        if(moveTo < 0 || moveTo >= map.Length){ return false; }
+        /*
+        if(moveTo.y < 0 || moveTo.y >= field.GetLength(0)){ return false; }
+        if(moveTo.x < 0 || moveTo.x >= field.GetLength(1)){ return false; }
 
+        
         if (map[moveTo] == 2)
         {
             int velocity = moveTo - moveFrom;
@@ -49,27 +48,25 @@ public class GameManagerScript : MonoBehaviour
         }
         map[moveTo] = number;
         map[moveFrom] = 0;
+        */
+
+
+        if (field[moveTo.y, moveTo.x] != null && field[moveTo.y, moveTo.x].tag == "Box") 
+        {
+            Vector2Int velocity = moveTo - moveFrom;
+            bool success = MoveNumber(moveTo, moveTo + velocity);
+            if (!success) {  return false; }
+        }
+
+        
+        field[moveFrom.y, moveFrom.x].transform.position = 
+          new Vector3(moveTo.x, map.GetLength(0) - moveTo.y, 0);
+        field[moveTo.y, moveTo.x] = field[moveFrom.y, moveFrom.x];
+
+        field[moveFrom.y, moveFrom.x] = null;
         return true;
     }
-    */
-
-
-    private Vector2Int GetPlayerIndex()
-    {
-        for(int y = 0;  y < map.GetLength(0); y++)
-        {
-            for(int x = 0; x < map.GetLength(1); x++)
-            {
-                if (field[y,x] == null) { continue; }
-                if (field[y, x].tag == "Player")
-                {
-                    return new Vector2Int(x,y);
-                }
-            }
-        }
-        return new Vector2Int(-1, -1);
-    }
-
+    
 
     void Start()
     {
@@ -88,8 +85,8 @@ public class GameManagerScript : MonoBehaviour
         // マップの生成
         map = new int[,]
        {
-            {0, 0, 0, 0, 0},
-            {0, 0, 1, 0, 0},
+            {2, 2, 2, 0, 0},
+            {0, 2, 1, 0, 0},
             {0, 0, 0, 0, 0}
        };
 
@@ -119,14 +116,16 @@ public class GameManagerScript : MonoBehaviour
                           Quaternion.identity
                      );
                 }
-                else
+                if (map[y, x] == 2)
                 {
+                    //GameObject instance
                     field[y, x] = Instantiate(
-                         playerPrefab,
-                         new Vector3(x, map.GetLength(1) - y, 0),
+                         boxPrefab,
+                         new Vector3(x, map.GetLength(0) - y, 0),
                           Quaternion.identity
-                    );
+                     );
                 }
+               
             }
             //debugText += "\n";
         }
@@ -136,24 +135,43 @@ public class GameManagerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        /*
+        
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            int playerIndex = GetplayerIndex();
-
-            MoveNumber(1, playerIndex, playerIndex + 1);
-            PrintArray();
+            Vector2Int playerIndex = GetPlayerIndex();
+            MoveNumber(
+                playerIndex, 
+                playerIndex + new Vector2Int(1, 0));
+            //PrintArray();
 
         }
-
+        
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            int playerIndex = GetplayerIndex();
+            Vector2Int playerIndex = GetPlayerIndex();
 
-            MoveNumber(1, playerIndex, playerIndex - 1);
-            PrintArray();
+            MoveNumber(playerIndex, playerIndex - new Vector2Int(1, 0));
+            //PrintArray();
 
         }
-        */
+
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            Vector2Int playerIndex = GetPlayerIndex();
+
+            MoveNumber(playerIndex, playerIndex - new Vector2Int(0, 1));
+            //PrintArray();
+
+        }
+
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            Vector2Int playerIndex = GetPlayerIndex();
+
+            MoveNumber(playerIndex, playerIndex + new Vector2Int(0, 1));
+            //PrintArray();
+
+        }
+
     }
 }
